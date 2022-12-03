@@ -42,7 +42,7 @@ const userSchema = mongoose.Schema(
 
 //Challenge Part - 1 Encrypt Password - Hooks
 userSchema.pre("save", async function(next){
-    if(!this.modified("password")) return next();
+    if(!this.isModified("password")) return next();
     this.password = await bcrypt.has(this.password, 10)
     next()
 })
@@ -67,6 +67,27 @@ userSchema.methods = {
                 expiresIn:config.JWT_EXPIRY,
             }
         )
+    },
+
+
+    generateForgotPasswordToken: function(){
+        const forgotToken = crypto.randomBytes(20).toString('hex');
+
+        // Step 1 Save to DB - not should be in clear
+        this.forgotPasswordToken = crypto
+        .createHash("sha256")
+        .update(forgotToken)
+        .digest("hex")
+
+         //    milisec
+        this.forgotPasswordExpiry = Date.now() + 20 + 60 * 1000
+        //Step 2 - return values to user (Email, or Phone)
+
+        return forgotToken;
+
+
+
+
     }
 }
 
