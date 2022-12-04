@@ -2,6 +2,7 @@ import User from "../models/user.schema"
 import asyncHandler from "../services/asyncHandler"
 import CustomError from "../utils/customError"
 import mailHelper from "../utils/mailHelper"
+import crypto from "crypto"
 
 export const cookieOptions = {
     expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
@@ -164,3 +165,56 @@ export const forgotPassword = asyncHandler(async(req,res)=>{
 
 
 })
+
+
+/*********************************
+* @Reset_Password 
+* @route http://localhost:4000/api/auth/password/reset/:resetToken
+* @description User will able to reset based on url token
+* @parameters token from url , password and confirm password
+* @return User object
+*********************************/
+
+export const resetPassword = asyncHandler(async(req,res)=>{
+    const {token: resetToken} = req.params;
+    const {password, confimPassword} = req.body
+
+    const resetPasswordToken = crypto
+    .createHash('sha256')
+    .update(resetToken)
+    .digest('hex')
+
+    const user = await User.findOne({
+        forgotPasswordToken: resetPasswordToken,
+        forgotPasswordExpiry:{$gt:Date.now()}
+    })
+
+    if(!user){
+        throw new CustomError("Password token is Invalid or invalid ", 400)
+    }
+    if(password !== confimPassword){
+        throw new CustomError("Password and Confirm Password does not match ", 400)
+
+    }
+
+    user.password = password
+    user.forgotPasswordToken = undefined
+    user.forgotPasswordExpiry = undefined
+
+    await user.save()
+
+    //create a token and send it to user
+    const token = user.getJwtToken()
+    user.password= undefined
+
+    //helper method for cookie can be added
+    res.cookie("token", token, cookieOptions)
+    res.status(200).json({
+        success:true, 
+        user,
+    })
+
+})
+
+
+// TODO: Create a controller for change password
