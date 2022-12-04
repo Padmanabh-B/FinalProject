@@ -37,9 +37,8 @@ const productSchema = mongoose.Schema({
     collectionId:{
         type:mongoose.Schema.Types.ObjectId,
         ref:"Collection",
-        
-
-    }
+    },
+    
 
 },
     {
