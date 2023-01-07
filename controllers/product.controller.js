@@ -65,3 +65,42 @@ export const addProduct = asyncHandler(async(req,res)=>{
         }
     })
 })
+
+
+export const getAllProducts = asyncHandler(async(req,res)=>{
+    const products = await Product.find({})
+    if(!products){
+        throw new CustomError("No Product Was Found", 404)
+    }
+    res.status(200).json({
+        success:true,
+        products
+    })
+})
+
+
+export const getProductById= asyncHandler(async(req,res)=>{
+    const {id:productId} = req.params
+    const product = await Product.findById({productId})
+
+
+    if(!product){
+        throw new CustomError("No Product Was Found", 404)
+    }
+    res.status(200).json({
+        success:true,
+        product
+    })
+})
+
+
+//assignment to read
+/*
+model.aggregate([],{},{})
+$group
+$push
+$$ROOT
+$lookup
+$project
+
+*/
